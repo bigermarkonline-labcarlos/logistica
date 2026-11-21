@@ -586,6 +586,6 @@ export function buildCarrierComparison(
 
 export function getComparisonNote(lang: Language): string {
   return lang === 'en'
-    ? 'Competitor figures are strictly based on publicly documented 2025–2026 Colombian tariff ranges. No competitor logos are displayed (color swatches only), and corridors outside public flat tables are clearly flagged for official carrier quoting.'
-    : 'Las cifras de competidores corresponden únicamente a rangos tarifarios públicos vigentes documentados en Colombia (2025–2026). No se publican logos de terceros (solo colores representativos) y los pesos o rutas sin tabla pública fija se indican para consulta directa sin inventar valores.';
+    ? 'Competitor figures are strictly based on publicly documented 2025–2026 Colombian tariff ranges. Carrier marks are displayed only as compact, blurred reference identifiers; corridors outside public flat tables are clearly flagged for official carrier quoting.'
+    : 'Las cifras de competidores corresponden únicamente a rangos tarifarios públicos vigentes documentados en Colombia (2025–2026). Los logos se muestran de forma compacta y borrosa como identificadores visuales; los pesos o rutas sin tabla pública fija se indican para consulta directa sin inventar valores.';
 }

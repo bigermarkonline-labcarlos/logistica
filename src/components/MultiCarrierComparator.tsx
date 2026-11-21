@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Info, Scale } from 'lucide-react';
 import {
   buildCarrierComparison,
@@ -22,6 +22,14 @@ interface MultiCarrierComparatorProps {
   onRequestQuote: (note?: string) => void;
 }
 
+const COMPETITOR_MARKS: Record<string, { initials: string; domain: string }> = {
+  servientrega: { initials: 'SE', domain: 'servientrega.com' },
+  inter_rapidisimo: { initials: 'IR', domain: 'interrapidisimo.com' },
+  coordinadora: { initials: 'CO', domain: 'coordinadora.com' },
+  tcc: { initials: 'TC', domain: 'tcc.com.co' },
+  envia: { initials: 'EN', domain: 'envia.co' },
+};
+
 export default function MultiCarrierComparator({
   lang,
   estimate,
@@ -31,6 +39,20 @@ export default function MultiCarrierComparator({
   onRequestQuote,
 }: MultiCarrierComparatorProps) {
   const [filterMode, setFilterMode] = useState<'all' | 'numeric'>('all');
+  const [showFloatingQuote, setShowFloatingQuote] = useState(false);
+
+  useEffect(() => {
+    const section = document.getElementById('comparador');
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowFloatingQuote(entry.isIntersecting),
+      { threshold: 0.16 }
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   const comparison = useMemo(
     () => buildCarrierComparison(estimate, weightKg, declaredValueCop),
@@ -173,26 +195,36 @@ export default function MultiCarrierComparator({
           )}
         </div>
 
-        {/* Responsive Comparison Table (No competitor logos — representative color swatches only) */}
-        <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+        {/* Compact floating comparison window */}
+        <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-[0_18px_50px_-24px_rgba(4,37,68,0.38)] ring-1 ring-slate-950/[0.03]">
+          <div className="h-10 px-4 flex items-center justify-between bg-slate-50 border-b border-slate-200">
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              {lang === 'en' ? 'Live comparison' : 'Comparativo en vivo'}
+            </span>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[760px]">
+            <table className="w-full text-left border-collapse min-w-[680px]">
               <thead>
-                <tr className="bg-[#042544] text-white text-xs uppercase tracking-wider border-b-2 border-[#F59E0B]">
-                  <th scope="col" className="py-3.5 px-5 font-semibold">
-                    {lang === 'en' ? 'Operator (Color ID)' : 'Transportadora (Color)'}
+                <tr className="bg-[#042544] text-white text-[10px] uppercase tracking-wider border-b-2 border-[#F59E0B]">
+                  <th scope="col" className="py-2.5 px-3 font-semibold">
+                    {lang === 'en' ? 'Operator' : 'Transportadora'}
                   </th>
-                  <th scope="col" className="py-3.5 px-5 font-semibold">
-                    {lang === 'en' ? 'Freight + Handling (COP)' : 'Flete + Manejo (COP)'}
+                  <th scope="col" className="py-2.5 px-3 font-semibold">
+                    {lang === 'en' ? 'Freight (COP)' : 'Flete (COP)'}
                   </th>
-                  <th scope="col" className="py-3.5 px-5 font-semibold">
-                    {lang === 'en' ? 'Estimated Transit' : 'Tiempo Estimado'}
+                  <th scope="col" className="py-2.5 px-3 font-semibold">
+                    {lang === 'en' ? 'Transit' : 'Tiempo'}
                   </th>
-                  <th scope="col" className="py-3.5 px-5 font-semibold">
-                    {lang === 'en' ? 'Destination Coverage' : 'Cobertura en Destino'}
+                  <th scope="col" className="py-2.5 px-3 font-semibold">
+                    {lang === 'en' ? 'Coverage' : 'Cobertura'}
                   </th>
-                  <th scope="col" className="py-3.5 px-5 font-semibold text-right">
-                    {lang === 'en' ? 'Diff. vs PostCargo' : 'Diferencia vs PostCargo'}
+                  <th scope="col" className="py-2.5 px-3 font-semibold text-right">
+                    {lang === 'en' ? 'vs. PC' : 'vs. PC'}
                   </th>
                 </tr>
               </thead>
@@ -231,57 +263,70 @@ export default function MultiCarrierComparator({
                           : 'hover:bg-slate-50/80 transition-colors'
                       }
                     >
-                      <td className="py-4 px-5 align-top">
-                        <div className="flex items-start gap-3">
-                          {/* Representative Brand Color Swatch Only (NO Logos) */}
-                          <span
-                            aria-label={`${row.name} — ${lang === 'en' ? row.colorNameEn : row.colorNameEs}`}
-                            className="w-2.5 h-9 rounded-sm shrink-0 mt-0.5"
-                            style={{ backgroundColor: row.representativeColorHex }}
-                          />
-                          <div>
-                            <p className="font-display font-bold text-[#042544] text-base leading-tight">
-                              {row.name}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-0.5 font-mono">
-                              {row.sourceDomain}
-                            </p>
-                          </div>
+                      <td className="py-2 px-3 align-middle">
+                        <div className="flex items-center gap-2">
+                          {row.isPostCargo ? (
+                            <div
+                              className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#042544] text-[11px] font-black text-white shadow-sm ring-1 ring-[#F59E0B]/60"
+                              aria-label="PostCargo"
+                            >
+                              PC
+                            </div>
+                          ) : (
+                            <div
+                              className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                              title={row.name}
+                              aria-label={row.name}
+                            >
+                              <img
+                                src={`https://www.google.com/s2/favicons?domain=${COMPETITOR_MARKS[row.id]?.domain ?? row.sourceDomain}&sz=64`}
+                                alt=""
+                                className="absolute inset-0 h-full w-full object-contain scale-125 p-1 opacity-55 blur-[1.15px] saturate-[0.85]"
+                                loading="lazy"
+                              />
+                              <span
+                                className="absolute inset-0 grid place-items-center text-[10px] font-black tracking-wide"
+                                style={{ color: row.representativeColorHex }}
+                              >
+                                {COMPETITOR_MARKS[row.id]?.initials ?? 'XX'}
+                              </span>
+                            </div>
+                          )}
+                          <p className="font-display font-bold text-[#042544] text-sm leading-tight">
+                            {row.isPostCargo ? row.name : COMPETITOR_MARKS[row.id]?.initials ?? 'XX'}
+                          </p>
                         </div>
                       </td>
 
-                      <td className="py-4 px-5 align-top">
+                      <td className="py-2 px-3 align-middle">
                         <p
-                          className={`font-mono tabular-nums ${
+                          className={`font-mono tabular-nums leading-tight ${
                             row.priceStatus === 'quote_required'
-                              ? 'text-xs text-slate-600 font-medium'
-                              : 'text-base font-bold text-[#042544]'
+                              ? 'text-[11px] text-slate-600 font-medium'
+                              : 'text-sm font-bold text-[#042544]'
                           }`}
                         >
                           {lang === 'en' ? row.priceDisplayEn : row.priceDisplayEs}
                         </p>
                         {row.minPriceCop !== null && row.maxPriceCop !== null && (
-                          <p className="font-mono text-xs text-slate-600 tabular-nums mt-0.5">
+                          <p className="font-mono text-[10px] text-slate-500 tabular-nums mt-0.5">
                             ≈ {formatUsdRange(row.minPriceCop, row.maxPriceCop)}
                           </p>
                         )}
-                        <p className="text-xs text-slate-500 mt-1 max-w-xs leading-snug">
-                          {lang === 'en' ? row.methodologyEn : row.methodologyEs}
-                        </p>
                       </td>
 
-                      <td className="py-4 px-5 align-top text-slate-700 whitespace-nowrap">
-                        <span className="font-medium">
+                      <td className="py-2 px-3 align-middle text-slate-700 whitespace-nowrap">
+                        <span className="text-xs font-medium">
                           {lang === 'en' ? row.transitEn : row.transitEs}
                         </span>
                       </td>
 
-                      <td className="py-4 px-5 align-top text-xs sm:text-sm text-slate-600 max-w-xs leading-snug">
+                      <td className="py-2 px-3 align-middle text-[11px] text-slate-600 max-w-[220px] leading-tight">
                         {lang === 'en' ? row.coverageEn : row.coverageEs}
                       </td>
 
                       <td
-                        className={`py-4 px-5 align-top text-right font-mono text-xs sm:text-sm tabular-nums whitespace-nowrap ${diffColor}`}
+                        className={`py-2 px-3 align-middle text-right font-mono text-[11px] tabular-nums whitespace-nowrap ${diffColor}`}
                       >
                         <span>{diffText}</span>
                         {!row.isPostCargo && diffMin !== null && diffMax !== null && (
@@ -327,6 +372,26 @@ export default function MultiCarrierComparator({
           </button>
         </div>
       </div>
+
+      {showFloatingQuote && (
+        <button
+          type="button"
+          onClick={() =>
+            onRequestQuote(
+              lang === 'en'
+                ? `Quick quote requested for ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
+                : `Cotización rápida solicitada para ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
+            )
+          }
+          className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2.5 rounded-2xl border border-white/15 bg-[#042544] px-4 py-3 text-sm font-bold text-white shadow-[0_16px_38px_-12px_rgba(4,37,68,0.75)] ring-1 ring-[#042544]/10 transition-transform hover:-translate-y-0.5 cursor-pointer"
+          aria-label={lang === 'en' ? 'Request a quote' : 'Solicitar cotización'}
+        >
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#F59E0B] text-[#042544]">
+            <ArrowRight className="h-4 w-4" />
+          </span>
+          {lang === 'en' ? 'Quote this route' : 'Cotizar esta ruta'}
+        </button>
+      )}
     </section>
   );
 }
