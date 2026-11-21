@@ -143,6 +143,7 @@ export default function App() {
   const [destinationId, setDestinationId] = useState('SAN JOSE DEL GUAVIARE|GUAVIARE');
   const [vehicleId, setVehicleId] = useState<VehicleTypeId>('campero_4x4');
   const [weightKg, setWeightKg] = useState(40);
+  const [quantity, setQuantity] = useState(1);
   const [declaredValueCop, setDeclaredValueCop] = useState(400000);
   const [secopInsured, setSecopInsured] = useState(false);
 
@@ -527,6 +528,7 @@ export default function App() {
           destinationId={destinationId}
           vehicleId={vehicleId}
           weightKg={weightKg}
+          quantity={quantity}
           declaredValueCop={declaredValueCop}
           secopInsured={secopInsured}
           estimate={estimate}
@@ -534,6 +536,7 @@ export default function App() {
           onChangeDestination={setDestinationId}
           onChangeVehicle={setVehicleId}
           onChangeWeight={setWeightKg}
+          onChangeQuantity={setQuantity}
           onChangeDeclaredValue={setDeclaredValueCop}
           onChangeSecopInsured={setSecopInsured}
           onRequestQuote={() => {
@@ -548,8 +551,10 @@ export default function App() {
           lang={lang}
           estimate={estimate}
           weightKg={weightKg}
+          quantity={quantity}
           declaredValueCop={declaredValueCop}
           onChangeWeight={setWeightKg}
+          onChangeQuantity={setQuantity}
           onRequestQuote={(note) => {
             if (note) {
               setLeadForm((prev) => ({ ...prev, notes: note }));

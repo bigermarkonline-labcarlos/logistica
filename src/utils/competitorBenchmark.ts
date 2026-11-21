@@ -31,6 +31,7 @@ export interface ComparisonSummary {
   destinationName: string;
   routeType: MatrixRouteType | null;
   weightKg: number;
+  quantity: number;
   declaredValueCop: number;
   rows: CarrierComparisonRow[];
   bestSavingsPct: number | null;
@@ -65,9 +66,11 @@ function formatRangeCop(min: number, max: number): string {
 export function buildCarrierComparison(
   estimate: ShippingEstimate,
   weightKg: number,
-  declaredValueCop: number
+  declaredValueCop: number,
+  quantity = 1
 ): ComparisonSummary {
   const safeWeight = Math.max(1, Math.ceil(weightKg));
+  const safeQuantity = Math.max(1, Math.floor(quantity));
   const safeDeclared = Math.max(0, declaredValueCop);
   const routeType = estimate.found ? estimate.route.routeType : estimate.destination.primaryRouteType;
   const destCityUpper = estimate.destination.city.toUpperCase();
@@ -578,6 +581,7 @@ export function buildCarrierComparison(
     destinationName: estimate.destination.displayName,
     routeType,
     weightKg: safeWeight,
+    quantity: safeQuantity,
     declaredValueCop: safeDeclared,
     rows,
     bestSavingsPct,

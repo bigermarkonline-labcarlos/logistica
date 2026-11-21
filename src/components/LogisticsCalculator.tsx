@@ -28,6 +28,7 @@ interface LogisticsCalculatorProps {
   destinationId: string;
   vehicleId: VehicleTypeId;
   weightKg: number;
+  quantity: number;
   declaredValueCop: number;
   secopInsured: boolean;
   estimate: ShippingEstimate;
@@ -35,6 +36,7 @@ interface LogisticsCalculatorProps {
   onChangeDestination: (destinationId: string) => void;
   onChangeVehicle: (vehicleId: VehicleTypeId) => void;
   onChangeWeight: (weightKg: number) => void;
+  onChangeQuantity: (quantity: number) => void;
   onChangeDeclaredValue: (valueCop: number) => void;
   onChangeSecopInsured: (insured: boolean) => void;
   onRequestQuote: () => void;
@@ -74,6 +76,7 @@ export default function LogisticsCalculator({
   destinationId,
   vehicleId,
   weightKg,
+  quantity,
   declaredValueCop,
   secopInsured,
   estimate,
@@ -81,6 +84,7 @@ export default function LogisticsCalculator({
   onChangeDestination,
   onChangeVehicle,
   onChangeWeight,
+  onChangeQuantity,
   onChangeDeclaredValue,
   onChangeSecopInsured,
   onRequestQuote,
@@ -302,7 +306,7 @@ export default function LogisticsCalculator({
             </div>
 
             {/* Weight + Declared Value Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label htmlFor="calc-weight-input" className="text-sm font-semibold text-[#042544]">
@@ -350,6 +354,33 @@ export default function LogisticsCalculator({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="calc-quantity"
+                  className="block text-sm font-semibold text-[#042544] mb-2"
+                >
+                  {lang === 'en' ? 'Shipment quantity' : 'Cantidad de envíos'}
+                </label>
+                <input
+                  id="calc-quantity"
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={quantity}
+                  onChange={(e) =>
+                    onChangeQuantity(
+                      Math.max(1, Math.min(500, Number(e.target.value) || 1))
+                    )
+                  }
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm font-mono tabular-nums text-[#042544] focus:outline-none focus:border-[#042544]"
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  {lang === 'en'
+                    ? 'Same route and weight per shipment'
+                    : 'Misma ruta y peso por envío'}
+                </p>
               </div>
 
               <div>

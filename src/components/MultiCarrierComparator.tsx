@@ -17,8 +17,10 @@ interface MultiCarrierComparatorProps {
   lang: Language;
   estimate: ShippingEstimate;
   weightKg: number;
+  quantity: number;
   declaredValueCop: number;
   onChangeWeight: (weightKg: number) => void;
+  onChangeQuantity: (quantity: number) => void;
   onRequestQuote: (note?: string) => void;
 }
 
@@ -34,8 +36,10 @@ export default function MultiCarrierComparator({
   lang,
   estimate,
   weightKg,
+  quantity,
   declaredValueCop,
   onChangeWeight,
+  onChangeQuantity,
   onRequestQuote,
 }: MultiCarrierComparatorProps) {
   const [filterMode, setFilterMode] = useState<'all' | 'numeric'>('all');
@@ -55,8 +59,8 @@ export default function MultiCarrierComparator({
   }, []);
 
   const comparison = useMemo(
-    () => buildCarrierComparison(estimate, weightKg, declaredValueCop),
-    [estimate, weightKg, declaredValueCop]
+    () => buildCarrierComparison(estimate, weightKg, declaredValueCop, quantity),
+    [estimate, weightKg, declaredValueCop, quantity]
   );
 
   const visibleRows = useMemo(() => {
@@ -120,6 +124,24 @@ export default function MultiCarrierComparator({
               })}
             </div>
 
+            <label className="inline-flex h-[38px] items-center gap-2 rounded-xl border border-slate-200 bg-[#F6F8FB] px-2.5">
+              <span className="text-xs font-semibold text-slate-600">
+                {lang === 'en' ? 'Qty.' : 'Cant.'}
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                value={quantity}
+                onChange={(e) =>
+                  onChangeQuantity(
+                    Math.max(1, Math.min(500, Number(e.target.value) || 1))
+                  )
+                }
+                className="h-7 w-14 rounded-lg border border-slate-200 bg-white px-2 text-center font-mono text-xs font-bold text-[#042544] outline-none focus:border-[#042544]"
+              />
+            </label>
+
             {/* Row Filter */}
             <div
               role="tablist"
@@ -170,6 +192,10 @@ export default function MultiCarrierComparator({
             </span>
             <span className="font-mono text-xs sm:text-sm font-semibold tabular-nums">
               {comparison.weightKg} kg
+            </span>
+            <span className="text-slate-400" aria-hidden="true">·</span>
+            <span className="font-mono text-xs sm:text-sm font-semibold tabular-nums">
+              {comparison.quantity} {lang === 'en' ? 'shipments' : 'envíos'}
             </span>
             <span className="text-slate-400" aria-hidden="true">
               ·
@@ -230,8 +256,22 @@ export default function MultiCarrierComparator({
               </thead>
               <tbody className="divide-y divide-slate-200 text-sm">
                 {visibleRows.map((row) => {
-                  const diffMin = row.savingsVsPostCargoMinCop;
-                  const diffMax = row.savingsVsPostCargoMaxCop;
+                  const totalMin =
+                    row.minPriceCop !== null
+                      ? row.minPriceCop * comparison.quantity
+                      : null;
+                  const totalMax =
+                    row.maxPriceCop !== null
+                      ? row.maxPriceCop * comparison.quantity
+                      : null;
+                  const diffMin =
+                    row.savingsVsPostCargoMinCop !== null
+                      ? row.savingsVsPostCargoMinCop * comparison.quantity
+                      : null;
+                  const diffMax =
+                    row.savingsVsPostCargoMaxCop !== null
+                      ? row.savingsVsPostCargoMaxCop * comparison.quantity
+                      : null;
                   let diffText = '—';
                   let diffColor = 'text-slate-500';
 
@@ -306,13 +346,28 @@ export default function MultiCarrierComparator({
                               : 'text-sm font-bold text-[#042544]'
                           }`}
                         >
-                          {lang === 'en' ? row.priceDisplayEn : row.priceDisplayEs}
+                          {totalMin !== null && totalMax !== null
+                            ? totalMin === totalMax
+                              ? formatCop(totalMin)
+                              : `${formatCop(totalMin)} – ${formatCop(totalMax)}`
+                            : lang === 'en'
+                              ? row.priceDisplayEn
+                              : row.priceDisplayEs}
                         </p>
-                        {row.minPriceCop !== null && row.maxPriceCop !== null && (
-                          <p className="font-mono text-[10px] text-slate-500 tabular-nums mt-0.5">
-                            ≈ {formatUsdRange(row.minPriceCop, row.maxPriceCop)}
-                          </p>
-                        )}
+                        {totalMin !== null && totalMax !== null ? (
+                          <>
+                            {comparison.quantity > 1 && (
+                              <p className="text-[10px] text-slate-500 mt-0.5">
+                                {comparison.quantity} × {lang === 'en' ? 'shipment' : 'envío'} ·{' '}
+                                {lang === 'en' ? 'unit' : 'unidad'}:{' '}
+                                {formatCop(row.minPriceCop!)}
+                              </p>
+                            )}
+                            <p className="font-mono text-[10px] text-slate-500 tabular-nums mt-0.5">
+                              ≈ {formatUsdRange(totalMin, totalMax)}
+                            </p>
+                          </>
+                        ) : null}
                       </td>
 
                       <td className="py-2 px-3 align-middle text-slate-700 whitespace-nowrap">
@@ -357,8 +412,8 @@ export default function MultiCarrierComparator({
             onClick={() =>
               onRequestQuote(
                 lang === 'en'
-                  ? `Comparative quote requested for ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
-                  : `Solicitud comparativa para ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
+                  ? `Comparative quote requested for ${comparison.originName} -> ${comparison.destinationName}: ${comparison.quantity} shipment(s) of ${comparison.weightKg} kg each.`
+                  : `Solicitud comparativa para ${comparison.originName} -> ${comparison.destinationName}: ${comparison.quantity} envío(s) de ${comparison.weightKg} kg cada uno.`
               )
             }
             className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold text-[#042544] bg-[#F59E0B] hover:bg-amber-400 rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0 shadow-sm"
@@ -379,8 +434,8 @@ export default function MultiCarrierComparator({
           onClick={() =>
             onRequestQuote(
               lang === 'en'
-                ? `Quick quote requested for ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
-                : `Cotización rápida solicitada para ${comparison.originName} -> ${comparison.destinationName} (${comparison.weightKg} kg).`
+                ? `Quick quote requested for ${comparison.originName} -> ${comparison.destinationName}: ${comparison.quantity} shipment(s) of ${comparison.weightKg} kg each.`
+                : `Cotización rápida solicitada para ${comparison.originName} -> ${comparison.destinationName}: ${comparison.quantity} envío(s) de ${comparison.weightKg} kg cada uno.`
             )
           }
           className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2.5 rounded-2xl border border-white/15 bg-[#042544] px-4 py-3 text-sm font-bold text-white shadow-[0_16px_38px_-12px_rgba(4,37,68,0.75)] ring-1 ring-[#042544]/10 transition-transform hover:-translate-y-0.5 cursor-pointer"
