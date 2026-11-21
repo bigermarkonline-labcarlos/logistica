@@ -443,7 +443,7 @@ export default function App() {
               className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#042544] hover:bg-[#0B3C6A] rounded-lg transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Lock className="w-3.5 h-3.5 text-[#F59E0B]" />
-              <span>{t.nav.siscoreAccess}</span>
+              <span className="hidden md:inline">{t.nav.siscoreAccess}</span>
             </button>
 
             <button
@@ -1136,11 +1136,11 @@ export default function App() {
       />
 
       {/* FLOATING AI ASSISTANT WIDGET (TEXT + VOICE SIMULATION) */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+      <div className="fixed bottom-3 right-3 z-50 flex flex-col items-end sm:bottom-4 sm:right-4">
         {assistantOpen && (
           <section
             aria-label={t.assistant.ariaLabel}
-            className="mb-3 w-[calc(100vw-2rem)] sm:w-[390px] max-h-[78vh] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300"
+            className="fixed inset-x-2 bottom-[4.75rem] max-h-[min(72dvh,620px)] rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col overflow-hidden transition-all duration-300 sm:relative sm:inset-auto sm:mb-3 sm:w-[390px] sm:max-h-[78vh]"
           >
             <div className="bg-[#042544] text-white px-4 py-3.5 flex items-center justify-between gap-3 border-b-2 border-[#F59E0B]">
               <div className="flex items-center gap-3 min-w-0">
@@ -1189,7 +1189,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F6F8FB]">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-[#F6F8FB] overscroll-contain">
               {chatMessages.map((msg) => (
                 <div
                   key={msg.id}
@@ -1323,7 +1323,7 @@ export default function App() {
           type="button"
           onClick={() => setAssistantOpen((prev) => !prev)}
           aria-label={assistantOpen ? t.assistant.launcherClose : t.assistant.launcherOpen}
-          className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 bg-[#042544] hover:bg-[#0B3C6A] text-white rounded-full shadow-xl border border-[#F59E0B]/60 transition-colors cursor-pointer"
+          className="flex h-12 items-center gap-2.5 rounded-full border border-[#F59E0B]/60 bg-[#042544] py-1.5 pl-1.5 pr-2 text-white shadow-xl transition-colors hover:bg-[#0B3C6A] sm:pr-4 cursor-pointer"
         >
           <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-[#F59E0B] bg-[#0B3C6A] shrink-0">
             {!avatarImgError ? (
@@ -1340,7 +1340,7 @@ export default function App() {
               </div>
             )}
           </div>
-          <span className="text-sm font-semibold whitespace-nowrap">
+          <span className="hidden text-sm font-semibold whitespace-nowrap sm:inline">
             {assistantOpen ? t.assistant.launcherClose : t.assistant.launcherOpen}
           </span>
         </button>

@@ -75,7 +75,7 @@ export default function MultiCarrierComparator({
   return (
     <section
       id="comparador"
-      className="py-16 lg:py-20 bg-white border-b border-slate-200/80"
+      className="py-10 sm:py-16 lg:py-20 bg-white border-b border-slate-200/80"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header & Quick Weight / Filter Bar */}
@@ -96,14 +96,14 @@ export default function MultiCarrierComparator({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap lg:items-center lg:gap-3">
             {/* Weight quick switcher synced with main calculator */}
             <div
               role="group"
               aria-label={
                 lang === 'en' ? 'Quick comparison weights' : 'Pesos de comparación rápida'
               }
-              className="inline-flex items-center gap-1 p-1 bg-[#F6F8FB] rounded-xl border border-slate-200"
+              className="inline-flex min-w-0 items-center justify-between gap-1 p-1 bg-[#F6F8FB] rounded-xl border border-slate-200"
             >
               {[1, 3, 5, 25].map((kg) => {
                 const active = Math.ceil(weightKg) === kg;
@@ -124,7 +124,7 @@ export default function MultiCarrierComparator({
               })}
             </div>
 
-            <label className="inline-flex h-[38px] items-center gap-2 rounded-xl border border-slate-200 bg-[#F6F8FB] px-2.5">
+            <label className="inline-flex h-[38px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-[#F6F8FB] px-2.5">
               <span className="text-xs font-semibold text-slate-600">
                 {lang === 'en' ? 'Qty.' : 'Cant.'}
               </span>
@@ -146,14 +146,14 @@ export default function MultiCarrierComparator({
             <div
               role="tablist"
               aria-label={lang === 'en' ? 'Filter operators' : 'Filtrar operadores'}
-              className="inline-flex items-center gap-1 p-1 bg-[#F6F8FB] rounded-xl border border-slate-200"
+              className="col-span-2 inline-flex items-center gap-1 p-1 bg-[#F6F8FB] rounded-xl border border-slate-200"
             >
               <button
                 type="button"
                 role="tab"
                 aria-selected={filterMode === 'all'}
                 onClick={() => setFilterMode('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                className={`flex-1 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                   filterMode === 'all'
                     ? 'bg-white text-[#042544] shadow-xs'
                     : 'text-slate-600 hover:text-[#042544]'
@@ -166,7 +166,7 @@ export default function MultiCarrierComparator({
                 role="tab"
                 aria-selected={filterMode === 'numeric'}
                 onClick={() => setFilterMode('numeric')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                className={`flex-1 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                   filterMode === 'numeric'
                     ? 'bg-white text-[#042544] shadow-xs'
                     : 'text-slate-600 hover:text-[#042544]'
@@ -179,7 +179,7 @@ export default function MultiCarrierComparator({
         </div>
 
         {/* Active Corridor Context Strip */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#F6F8FB] border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-3 sm:p-5 rounded-2xl bg-[#F6F8FB] border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#042544]">
             <span className="inline-flex items-center gap-2 font-bold">
               <Scale className="w-4 h-4 text-[#B45309] shrink-0" />
@@ -233,7 +233,63 @@ export default function MultiCarrierComparator({
               {lang === 'en' ? 'Live comparison' : 'Comparativo en vivo'}
             </span>
           </div>
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-slate-200 sm:hidden">
+            {visibleRows.map((row) => {
+              const totalMin = row.minPriceCop !== null ? row.minPriceCop * comparison.quantity : null;
+              const totalMax = row.maxPriceCop !== null ? row.maxPriceCop * comparison.quantity : null;
+              const mark = row.isPostCargo ? 'PC' : COMPETITOR_MARKS[row.id]?.initials ?? 'XX';
+              return (
+                <article
+                  key={row.id}
+                  className={`p-3 ${row.isPostCargo ? 'bg-amber-50/70' : 'bg-white'}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-black ${
+                        row.isPostCargo
+                          ? 'bg-[#042544] text-white ring-1 ring-[#F59E0B]'
+                          : 'border border-slate-200 bg-white'
+                      }`}
+                      style={!row.isPostCargo ? { color: row.representativeColorHex } : undefined}
+                    >
+                      {mark}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-display text-sm font-bold text-[#042544]">
+                          {row.isPostCargo ? row.name : mark}
+                        </p>
+                        <p className="text-right font-mono text-sm font-bold tabular-nums text-[#042544]">
+                          {totalMin !== null && totalMax !== null
+                            ? totalMin === totalMax
+                              ? formatCop(totalMin)
+                              : `${formatCop(totalMin)} – ${formatCop(totalMax)}`
+                            : lang === 'en'
+                              ? row.priceDisplayEn
+                              : row.priceDisplayEs}
+                        </p>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                        <p>
+                          <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                            {lang === 'en' ? 'Transit' : 'Tiempo'}
+                          </span>
+                          {lang === 'en' ? row.transitEn : row.transitEs}
+                        </p>
+                        <p className="text-right">
+                          <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                            {lang === 'en' ? 'Coverage' : 'Cobertura'}
+                          </span>
+                          {lang === 'en' ? row.coverageEn : row.coverageEs}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-left border-collapse min-w-[680px]">
               <thead>
                 <tr className="bg-[#042544] text-white text-[10px] uppercase tracking-wider border-b-2 border-[#F59E0B]">
@@ -438,7 +494,7 @@ export default function MultiCarrierComparator({
                 : `Cotización rápida solicitada para ${comparison.originName} -> ${comparison.destinationName}: ${comparison.quantity} envío(s) de ${comparison.weightKg} kg cada uno.`
             )
           }
-          className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2.5 rounded-2xl border border-white/15 bg-[#042544] px-4 py-3 text-sm font-bold text-white shadow-[0_16px_38px_-12px_rgba(4,37,68,0.75)] ring-1 ring-[#042544]/10 transition-transform hover:-translate-y-0.5 cursor-pointer"
+          className="fixed bottom-[4.75rem] right-3 z-40 inline-flex items-center gap-2.5 rounded-2xl border border-white/15 bg-[#042544] px-3 py-2.5 text-xs font-bold text-white shadow-[0_16px_38px_-12px_rgba(4,37,68,0.75)] ring-1 ring-[#042544]/10 transition-transform hover:-translate-y-0.5 sm:bottom-5 sm:right-4 sm:px-4 sm:py-3 sm:text-sm cursor-pointer"
           aria-label={lang === 'en' ? 'Request a quote' : 'Solicitar cotización'}
         >
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#F59E0B] text-[#042544]">
