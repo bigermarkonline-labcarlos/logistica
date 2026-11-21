@@ -97,7 +97,7 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
   return (
     <div
       ref={stageRef}
-      className="relative h-[115svh] sm:h-[125svh]"
+      className="relative h-[472px]"
     >
       <section
       ref={routeRef}
