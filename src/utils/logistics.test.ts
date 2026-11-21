@@ -389,7 +389,7 @@ test('validateSiscoreLogin enforces role (principal/operadores/clientes), userna
   assert.deepEqual(validPrincipal, {});
 });
 
-test('computeRouteTelemetry drives mountain slope pitch, 3-stage vehicle transitions, and checkpoint illumination', () => {
+test('computeRouteTelemetry drives mountain slope pitch, 4-stage vehicle transitions, and checkpoint illumination', () => {
   const start = computeRouteTelemetry(0, 'es');
   assert.equal(start.stage, 'trunk_truck');
   assert.equal(start.trunkOpacity, 1);
@@ -403,25 +403,25 @@ test('computeRouteTelemetry drives mountain slope pitch, 3-stage vehicle transit
   assert.ok(midTrunk.point.x > start.point.x);
   assert.notEqual(Math.round(angleOnRouteDeg(0.18)), 0);
 
-  // Villavicencio cross-docking relay switches to 4x4 rural vehicle
+  // Villavicencio cross-docking relay switches to NKR regional vehicle
   const rural = computeRouteTelemetry(0.42, 'en');
-  assert.equal(rural.stage, 'rural_4x4');
-  assert.equal(rural.rural4x4Opacity, 1);
+  assert.equal(rural.stage, 'nkr_truck');
+  assert.equal(rural.nkrTruckOpacity, 1);
   assert.equal(rural.trunkOpacity, 0);
   assert.equal(rural.activeStopIndex, 1);
   assert.ok(rural.isTransferringTo4x4);
 
-  // Granada last-mile switch transforms into specialized last-mile unit
+  // Granada relay switches to a jeep, then a motorcycle for final last mile
   const lastMile = computeRouteTelemetry(0.78, 'es');
-  assert.equal(getVehicleStageAtProgress(0.78), 'last_mile_unit');
-  assert.equal(lastMile.lastMileOpacity, 1);
-  assert.equal(lastMile.rural4x4Opacity, 0);
+  assert.equal(getVehicleStageAtProgress(0.78), 'motorcycle');
+  assert.equal(lastMile.motorcycleOpacity, 1);
+  assert.equal(lastMile.nkrTruckOpacity, 0);
   assert.equal(lastMile.activeStopIndex, 2);
 
   // Arrival in San José del Guaviare illuminates final checkpoint and 100% completion
   const arrival = computeRouteTelemetry(1, 'es');
   assert.equal(arrival.activeStopIndex, 3);
-  assert.equal(arrival.stage, 'last_mile_unit');
+  assert.equal(arrival.stage, 'motorcycle');
   assert.equal(arrival.altitudeMeters, 175);
   assert.ok(pointOnRoute(1).x > pointOnRoute(0.5).x);
 });

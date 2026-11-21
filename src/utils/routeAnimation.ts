@@ -5,7 +5,13 @@ export interface RoutePoint {
   y: number;
 }
 
-export type RouteVehicleStage = 'trunk_truck' | 'rural_4x4' | 'last_mile_unit';
+export type RouteVehicleStage =
+  | 'trunk_truck'
+  | 'nkr_truck'
+  | 'jeep'
+  | 'motorcycle'
+  | 'rural_4x4'
+  | 'last_mile_unit';
 
 export interface RouteStopConfig {
   id: string;
@@ -93,19 +99,19 @@ export const ROUTE_STOPS: RouteStopConfig[] = [
     progress: TRANSFER_PROGRESS,
     altitudeMeters: 467,
     point: { x: 356, y: 138 },
-    stage: 'rural_4x4',
+    stage: 'nkr_truck',
     es: {
       time: 'Ayer · 16:40',
       place: 'Villavicencio',
       elapsed: '9 h 25 min',
-      vehicleLabel: 'Relevo a Campero 4x4',
+      vehicleLabel: 'Relevo a Camión NKR',
       zoneTag: 'Cross-Docking',
     },
     en: {
       time: 'Yesterday · 16:40',
       place: 'Villavicencio',
       elapsed: '9 h 25 min',
-      vehicleLabel: 'Transfer to 4x4 Utility',
+      vehicleLabel: 'Transfer to NKR Truck',
       zoneTag: 'Cross-Docking',
     },
   },
@@ -114,19 +120,19 @@ export const ROUTE_STOPS: RouteStopConfig[] = [
     progress: GRANADA_PROGRESS,
     altitudeMeters: 332,
     point: { x: 642, y: 144 },
-    stage: 'last_mile_unit',
+    stage: 'jeep',
     es: {
       time: 'Hoy · 09:20',
       place: 'Granada / Fuente de Oro',
       elapsed: '26 h 05 min',
-      vehicleLabel: 'Cambio a Última Milla',
+      vehicleLabel: 'Cambio a Jeep 4x4',
       zoneTag: 'Ruta Rural',
     },
     en: {
       time: 'Today · 09:20',
       place: 'Granada / Fuente de Oro',
       elapsed: '26 h 05 min',
-      vehicleLabel: 'Switch to Last-Mile Unit',
+      vehicleLabel: 'Switch to 4x4 Jeep',
       zoneTag: 'Rural Trail',
     },
   },
@@ -135,19 +141,19 @@ export const ROUTE_STOPS: RouteStopConfig[] = [
     progress: DESTINATION_PROGRESS,
     altitudeMeters: 175,
     point: { x: 884, y: 122 },
-    stage: 'last_mile_unit',
+    stage: 'motorcycle',
     es: {
       time: 'Est. hoy · 16:30',
       place: 'San José del Guaviare',
       elapsed: '33 h 15 min',
-      vehicleLabel: 'Entrega Asistida Final',
+      vehicleLabel: 'Entrega Final en Motocicleta',
       zoneTag: 'Destino Final',
     },
     en: {
       time: 'Est. today · 16:30',
       place: 'San José del Guaviare',
       elapsed: '33 h 15 min',
-      vehicleLabel: 'Final Assisted Delivery',
+      vehicleLabel: 'Final Motorcycle Delivery',
       zoneTag: 'Final Destination',
     },
   },
@@ -235,8 +241,9 @@ export function angleOnRouteDeg(progress: number): number {
 export function getVehicleStageAtProgress(progress: number): RouteVehicleStage {
   const p = clamp(progress, 0, 1);
   if (p < TRANSFER_PROGRESS) return 'trunk_truck';
-  if (p < LAST_MILE_PROGRESS) return 'rural_4x4';
-  return 'last_mile_unit';
+  if (p < 0.58) return 'nkr_truck';
+  if (p < LAST_MILE_PROGRESS) return 'jeep';
+  return 'motorcycle';
 }
 
 export interface RouteTelemetrySnapshot {
@@ -245,6 +252,9 @@ export interface RouteTelemetrySnapshot {
   angleDeg: number;
   stage: RouteVehicleStage;
   trunkOpacity: number;
+  nkrTruckOpacity: number;
+  jeepOpacity: number;
+  motorcycleOpacity: number;
   rural4x4Opacity: number;
   lastMileOpacity: number;
   activeStopIndex: number;
@@ -271,10 +281,18 @@ export function computeRouteTelemetry(
   const trunkOpacity = 1 - trunkOut;
 
   const ruralIn = clamp((progress - 0.32) / 0.08, 0, 1);
-  const ruralOut = clamp((progress - 0.68) / 0.08, 0, 1);
-  const rural4x4Opacity = Math.min(ruralIn, 1 - ruralOut);
+  const nkrOut = clamp((progress - 0.52) / 0.08, 0, 1);
+  const nkrTruckOpacity = Math.min(ruralIn, 1 - nkrOut);
 
-  const lastMileOpacity = clamp((progress - 0.68) / 0.08, 0, 1);
+  const jeepIn = clamp((progress - 0.52) / 0.08, 0, 1);
+  const jeepOut = clamp((progress - 0.68) / 0.08, 0, 1);
+  const jeepOpacity = Math.min(jeepIn, 1 - jeepOut);
+
+  const motorcycleIn = clamp((progress - 0.68) / 0.08, 0, 1);
+  const motorcycleOpacity = motorcycleIn;
+
+  const rural4x4Opacity = nkrTruckOpacity;
+  const lastMileOpacity = Math.max(jeepOpacity, motorcycleOpacity);
 
   const activeStopIndex =
     progress < TRANSFER_PROGRESS
@@ -323,13 +341,17 @@ export function computeRouteTelemetry(
       ? lang === 'en'
         ? 'Trunk Freight · NPR / Turbo'
         : 'Carga Troncal · Camión NPR'
-      : stage === 'rural_4x4'
+      : stage === 'nkr_truck'
         ? lang === 'en'
-          ? 'Rural Reexpedition · 4x4 Unit'
-          : 'Reexpedición Rural · Campero 4x4'
-        : lang === 'en'
-          ? 'Last Mile · Specialized Delivery Unit'
-          : 'Última Milla · Unidad de Entrega Final';
+          ? 'Regional Relay · NKR Truck'
+          : 'Relevo Regional · Camión NKR'
+        : stage === 'jeep'
+          ? lang === 'en'
+            ? 'Rural Access · 4x4 Jeep'
+            : 'Acceso Rural · Jeep 4x4'
+          : lang === 'en'
+            ? 'Final Last Mile · Motorcycle'
+            : 'Última Milla · Motocicleta';
 
   const terrainNotice =
     progress < 0.16
@@ -358,6 +380,9 @@ export function computeRouteTelemetry(
     angleDeg,
     stage,
     trunkOpacity,
+    nkrTruckOpacity,
+    jeepOpacity,
+    motorcycleOpacity,
     rural4x4Opacity,
     lastMileOpacity,
     activeStopIndex,

@@ -10,6 +10,7 @@ import {
 } from '../utils/routeAnimation';
 
 export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language }) {
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const routeRef = useRef<HTMLElement | null>(null);
   const [progress, setProgress] = useState(0);
   const [scrollDistancePx, setScrollDistancePx] = useState(560);
@@ -20,16 +21,15 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
     const updateProgress = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const route = routeRef.current;
-        if (!route) return;
+          const stage = stageRef.current;
+          if (!stage) return;
 
-        const documentTop = route.getBoundingClientRect().top + window.scrollY;
-        // Map full 0% -> 100% choreography across the element's natural traversal
-        // from top of page until it rests comfortably in the upper viewport.
-        const distance = clamp(documentTop - 80, 380, 880);
-        setScrollDistancePx((prev) => (Math.abs(prev - distance) < 2 ? prev : distance));
+          const rect = stage.getBoundingClientRect();
+          const stickyTop = window.innerWidth < 640 ? 64 : 72;
+          const distance = Math.max(300, rect.height - (window.innerHeight - stickyTop));
+          setScrollDistancePx((prev) => (Math.abs(prev - distance) < 2 ? prev : distance));
 
-        const nextProgress = clamp(window.scrollY / distance, 0, 1);
+          const nextProgress = clamp((stickyTop - rect.top) / distance, 0, 1);
         setProgress((current) =>
           Math.abs(current - nextProgress) < 0.0015 ? current : nextProgress
         );
@@ -49,7 +49,10 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
 
   const handleJumpToStop = useCallback(
     (targetProgress: number) => {
-      const targetScroll = Math.round(targetProgress * scrollDistancePx);
+      const stageTop =
+        (stageRef.current?.getBoundingClientRect().top ?? 0) + window.scrollY;
+      const stickyTop = window.innerWidth < 640 ? 64 : 72;
+      const targetScroll = Math.round(stageTop - stickyTop + targetProgress * scrollDistancePx);
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
     },
     [scrollDistancePx]
@@ -67,39 +70,39 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
           badgeTitle:
             lang === 'en' ? 'Trunk Truck NPR' : 'Camión Troncal NPR',
         }
-      : telemetry.stage === 'rural_4x4'
+      : telemetry.stage === 'nkr_truck'
         ? {
             pillClass: 'border-[#F59E0B]/60 bg-[#F59E0B]/20 text-amber-200',
             accentHex: '#F59E0B',
-            badgeTitle: telemetry.isTransferringTo4x4
-              ? lang === 'en'
-                ? 'Cross-Dock → 4x4'
-                : 'Relevo → Campero 4x4'
-              : lang === 'en'
-                ? 'Rural 4x4 Pickup'
-                : 'Campero / Pickup 4x4',
+            badgeTitle: lang === 'en' ? 'NKR Regional Relay' : 'Relevo Regional NKR',
           }
+        : telemetry.stage === 'jeep'
+          ? {
+              pillClass: 'border-orange-400/60 bg-orange-500/20 text-orange-200',
+              accentHex: '#FB923C',
+              badgeTitle: lang === 'en' ? 'Jeep 4x4 Rural Access' : 'Jeep 4x4 Acceso Rural',
+            }
         : {
             pillClass: 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200',
             accentHex: '#10B981',
-            badgeTitle: telemetry.isSwitchingToLastMile
-              ? lang === 'en'
-                ? 'Switch → Last-Mile'
-                : 'Cambio → Última Milla'
-              : lang === 'en'
-                ? 'Last-Mile Delivery Unit'
-                : 'Unidad Última Milla',
+            badgeTitle: lang === 'en'
+              ? 'Final Last-Mile Motorcycle'
+              : 'Motocicleta Última Milla',
           };
 
   return (
-    <section
+    <div
+      ref={stageRef}
+      className="relative h-[150vh] sm:h-[180vh]"
+    >
+      <section
       ref={routeRef}
       aria-label={
         lang === 'en'
           ? 'Animated mountain & last-mile reexpedition route from Bogotá to San José del Guaviare'
           : 'Gráfico animado de elevación y relevo de carga de Bogotá a San José del Guaviare'
       }
-      className="relative rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(4,37,68,0.88)_0%,rgba(2,24,46,0.96)_100%)] px-4 py-4 sm:px-6 sm:py-5 shadow-2xl shadow-black/40 overflow-hidden"
+      className="sticky top-[64px] sm:top-[72px] relative max-h-[calc(100dvh-72px)] sm:max-h-[calc(100dvh-88px)] rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(4,37,68,0.88)_0%,rgba(2,24,46,0.96)_100%)] px-3 py-3 sm:px-6 sm:py-5 shadow-2xl shadow-black/40 overflow-hidden"
       data-testid="scroll-route-visual"
       data-stage={telemetry.stage}
       data-progress={telemetry.progress.toFixed(2)}
@@ -162,10 +165,11 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
       <div className="relative mt-3 rounded-xl border border-white/10 bg-[#021222]/85 overflow-hidden">
         <svg
           aria-labelledby="compact-route-title compact-route-description"
-          className="block h-auto w-full"
+          className="block h-[180px] w-full sm:h-auto"
           fill="none"
           role="img"
           viewBox="0 0 960 210"
+          preserveAspectRatio="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <title id="compact-route-title">
@@ -510,8 +514,8 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
                 </g>
               </g>
 
-              {/* VEHICLE 2: RURAL 4x4 UTILITY PICKUP (Villavicencio -> Granada) */}
-              <g data-testid="route-pickup" opacity={telemetry.rural4x4Opacity}>
+              {/* VEHICLE 2: NKR REGIONAL TRUCK (Villavicencio -> Granada) */}
+              <g data-testid="route-nkr" opacity={telemetry.nkrTruckOpacity}>
                 {/* Warm amber off-road beam */}
                 <polygon
                   points="21,-6 58,-15 58,3 21,-1"
@@ -519,12 +523,13 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
                   fillOpacity="0.25"
                 />
                 <ellipse cx="0" cy="4.5" rx="25" ry="3.5" fill="#000000" fillOpacity="0.45" />
-                {/* Rear cargo bed + secured freight crate */}
-                <rect x="-18" y="-21" width="13" height="9" rx="1.5" fill="#E2E8F0" stroke="#F59E0B" strokeWidth="1.5" />
-                <line x1="-18" y1="-16.5" x2="-5" y2="-16.5" stroke="#042544" strokeWidth="1.3" />
-                {/* 4x4 Pickup Body & Rollbar */}
-                <path d="M-22 -12 H0 V-16 H11 L19 -8 V-1 H-22 Z" fill="#F59E0B" />
-                <path d="M-6 -12 L-10 -20 H-2" stroke="#F8FAFC" strokeWidth="1.8" strokeLinecap="round" />
+                {/* NKR cargo box with visible package */}
+                <rect x="-21" y="-23" width="27" height="18" rx="2" fill="#F8FAFC" stroke="#F59E0B" strokeWidth="1.5" />
+                <rect x="-16" y="-18" width="8" height="7" rx="1" fill="#F59E0B" />
+                <path d="M-12 -18v7M-16 -14h8" stroke="#042544" strokeWidth="1" />
+                {/* NKR cab */}
+                <path d="M6 -16 H18 L24 -8 V-1 H6 Z" fill="#F59E0B" />
+                <path d="M9 -13 H16 L21 -8 H9 Z" fill="#042544" />
                 <circle cx="-6" cy="-21" r="1.8" fill="#FEF08A" />
                 <path d="M2 -14 H10 L15 -8 H2 Z" fill="#042544" />
                 <rect x="17" y="-5" width="2.5" height="2.5" fill="#FEF08A" />
@@ -540,8 +545,8 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
                 </g>
               </g>
 
-              {/* VEHICLE 3: SPECIALIZED LAST-MILE DELIVERY UNIT (Granada -> Guaviare) */}
-              <g data-testid="route-last-mile" opacity={telemetry.lastMileOpacity}>
+              {/* VEHICLE 3: JEEP 4x4 (Granada -> Last-Mile relay) */}
+              <g data-testid="route-jeep" opacity={telemetry.jeepOpacity}>
                 {/* Emerald-white last-mile headlight */}
                 <polygon
                   points="19,-6 54,-14 54,3 19,-1"
@@ -574,13 +579,36 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
                   <line x1="-2.2" y1="0" x2="2.2" y2="0" stroke="#10B981" strokeWidth="1.4" />
                 </g>
               </g>
+
+              {/* VEHICLE 4: MOTORCYCLE WITH PACKAGE (final last mile) */}
+              <g data-testid="route-motorcycle" opacity={telemetry.motorcycleOpacity}>
+                <polygon
+                  points="18,-5 48,-12 48,3 18,-1"
+                  fill="#10B981"
+                  fillOpacity="0.22"
+                />
+                <ellipse cx="0" cy="5" rx="18" ry="2.8" fill="#000000" fillOpacity="0.45" />
+                <g transform={`translate(-12 3) rotate(${wheelAngle})`}>
+                  <circle r="4.5" fill="#042544" stroke="#F8FAFC" strokeWidth="1.5" />
+                  <circle r="1" fill="#10B981" />
+                </g>
+                <g transform={`translate(12 3) rotate(${wheelAngle})`}>
+                  <circle r="4.5" fill="#042544" stroke="#F8FAFC" strokeWidth="1.5" />
+                  <circle r="1" fill="#10B981" />
+                </g>
+                <path d="M-9 1 0-7 9 1" fill="none" stroke="#F8FAFC" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M-1 -7H7" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+                {/* Package remains visible on every last-mile stage */}
+                <rect x="-5" y="-18" width="10" height="9" rx="1.5" fill="#F59E0B" stroke="#F8FAFC" strokeWidth="1" />
+                <path d="M0 -18v9M-5 -14h10" stroke="#042544" strokeWidth="1" />
+              </g>
             </g>
           </g>
         </svg>
       </div>
 
       {/* PROGRESSIVELY ILLUMINATED MILESTONE TIMELINE CARDS */}
-      <div className="relative mt-4 space-y-2.5">
+      <div className="relative mt-4 hidden space-y-2.5 sm:block">
         {/* Clean Step Connector Rail Above Cards */}
         <div className="hidden sm:block relative h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
           <div
@@ -681,8 +709,8 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
           <Navigation className="w-3 h-3 text-[#F59E0B] shrink-0" />
           <span>
             {lang === 'en'
-              ? 'Cross-docking & fleet adaptation: Trunk → 4x4 → Last-Mile Delivery'
-              : 'Relevo y adaptación de flota: Troncal → 4x4 → Última Milla'}
+              ? 'Fleet transfer: Trunk NPR → NKR → Jeep 4x4 → Motorcycle'
+              : 'Relevo de flota: Troncal NPR → NKR → Jeep 4x4 → Motocicleta'}
           </span>
         </span>
         <span className="font-mono font-semibold text-amber-200 tabular-nums">
@@ -690,5 +718,6 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
         </span>
       </div>
     </section>
+    </div>
   );
 }
