@@ -1,0 +1,6 @@
+{
+  "name": "PostCargo — Reexpediciones & Logística",
+  "description": "Plataforma logística colombiana de reexpediciones rurales, operación B2B y SECOP, red de transportistas aliados y trazabilidad SISCORE en tiempo real.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
