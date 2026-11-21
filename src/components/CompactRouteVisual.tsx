@@ -26,7 +26,11 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
 
           const rect = stage.getBoundingClientRect();
           const stickyTop = window.innerWidth < 640 ? 64 : 72;
-          const distance = Math.max(300, rect.height - (window.innerHeight - stickyTop));
+          const visualHeight = routeRef.current?.offsetHeight ?? window.innerHeight * 0.65;
+          const distance = Math.max(
+            220,
+            rect.height - visualHeight - stickyTop
+          );
           setScrollDistancePx((prev) => (Math.abs(prev - distance) < 2 ? prev : distance));
 
           const nextProgress = clamp((stickyTop - rect.top) / distance, 0, 1);
@@ -93,7 +97,7 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
   return (
     <div
       ref={stageRef}
-      className="relative h-[150vh] sm:h-[180vh]"
+      className="relative h-[115svh] sm:h-[125svh]"
     >
       <section
       ref={routeRef}
@@ -165,11 +169,11 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
       <div className="relative mt-3 rounded-xl border border-white/10 bg-[#021222]/85 overflow-hidden">
         <svg
           aria-labelledby="compact-route-title compact-route-description"
-          className="block h-[180px] w-full sm:h-auto"
+          className="block h-[160px] w-full sm:h-[210px] lg:h-[230px]"
           fill="none"
           role="img"
           viewBox="0 0 960 210"
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
           xmlns="http://www.w3.org/2000/svg"
         >
           <title id="compact-route-title">
@@ -605,6 +609,29 @@ export default function CompactRouteVisual({ lang = 'es' }: { lang?: Language })
             </g>
           </g>
         </svg>
+      </div>
+
+      {/* Mobile route stages stay compact and visible while the visual remains sticky */}
+      <div className="mt-2 sm:hidden">
+        <div className="grid grid-cols-4 gap-1.5" aria-label={lang === 'en' ? 'Route stages' : 'Etapas de ruta'}>
+          {[
+            lang === 'en' ? 'NPR' : 'NPR',
+            'NKR',
+            '4x4',
+            lang === 'en' ? 'Moto' : 'Moto',
+          ].map((label, index) => (
+            <div
+              key={label}
+              className={`rounded-md border px-1 py-1.5 text-center text-[9px] font-bold ${
+                telemetry.progress >= [0, 0.36, 0.58, 0.72][index]
+                  ? 'border-[#F59E0B]/70 bg-[#F59E0B]/15 text-amber-200'
+                  : 'border-white/10 bg-white/[0.03] text-slate-500'
+              }`}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* PROGRESSIVELY ILLUMINATED MILESTONE TIMELINE CARDS */}
